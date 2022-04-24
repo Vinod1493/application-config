@@ -1,0 +1,46 @@
+server:
+  port: 9999
+      
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: DEPARTMENT-SERVICE
+        uri: lb://DEPARTMENT-SERVICE
+        predicates:
+        - Path=/department/**
+        filters:
+        - name: CircuitBreaker
+          args:
+            name: departmentService
+            fallbackuri: forward:/departmentFallback
+      - id: USER-SERVICE
+        uri: lb://USER-SERVICE
+        predicates:
+        - Path=/user/**
+  main:
+    web-application-type: reactive
+            
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      departmentService:
+        sliding-window-size: 10
+        permitted-number-of-calls-in-half-open-state: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+  timelimiter:
+    instances:
+      DPARTMENT-SERVICE:
+        timeout-duration: 20s
+        
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
